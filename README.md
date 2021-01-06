@@ -1,5 +1,5 @@
 custom c++ library
 
 top be added:
-graphs
-segment tree
+1. graphs
+2. segment Tree
