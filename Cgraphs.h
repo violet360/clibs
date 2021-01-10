@@ -12,6 +12,8 @@ using namespace std;
 
 class Cgraph
 {
+	// bool arg0 = false;
+	bool arg0;
 
 private:
 	bool b = false;
@@ -24,10 +26,68 @@ private:
 
 public:
 	
+	Cgraph(bool arg)
+	{
+		this->arg0 = arg; // if false undirected else undorected
+	}
 
 
 
-	void DFS0(ll u,unordered_map<ll, ll>& disc,unordered_map<ll, ll>& low,unordered_map<ll, ll>& parent,unordered_map<ll, bool>& articulation_Point)
+
+
+	void DFSb(ll u,unordered_map<ll, ll>& disc,unordered_map<ll, ll>& low,unordered_map<ll, ll>& parent,vector<pair<ll,ll>>& bridge)
+	{
+		static ll time = 0;
+		disc[u] = low[u] = time;
+		time+=1;
+		for(ll v: adj[u])
+		{
+			if(disc[v]==-1)	//If v is not visited
+			{
+				parent[v] = u;
+				DFSb(v,disc,low,parent,bridge);
+				low[u] = min(low[u],low[v]);
+
+				if(low[v] > disc[u])
+					bridge.push_back({u,v});
+			}
+			else if(v!=parent[u])	//Ignore child to parent edge
+				low[u] = min(low[u],disc[v]);
+		}
+	}
+
+	vector<pair<ll, ll>> findBridges_Tarjan()
+	{
+		unordered_map<ll, ll> disc;
+		unordered_map<ll, ll> low;
+		unordered_map<ll, ll> parent;
+		// vector<bool> articulation_Point(V,false);
+		vector<pair<ll, ll>>bridge;
+		vector<ll>node_list;
+
+ 		for(auto u:adj)
+ 		{
+ 			node_list.push_back(u.first);
+ 		}
+
+ 		for(auto u:node_list)
+ 		{
+ 			disc[u]= -1;
+ 			low[u] = -1;
+ 			parent[u] = -1;
+ 		}
+
+		for(auto i:node_list)
+			if(disc[i]==-1)
+				DFSb(i,disc,low,parent,bridge);
+
+
+		return bridge;
+	}
+
+
+
+	void DFSa(ll u,unordered_map<ll, ll>& disc,unordered_map<ll, ll>& low,unordered_map<ll, ll>& parent,unordered_map<ll, bool>& articulation_Point)
 	{
 		static ll time = 0;
 		disc[u] = low[u] = time;
@@ -40,7 +100,7 @@ public:
 			{
 				children += 1;
 				parent[v] = u;
-				DFS0(v,disc,low,parent,articulation_Point);
+				DFSa(v,disc,low,parent,articulation_Point);
 				low[u] = min(low[u],low[v]);
 
 				if(parent[u]==-1 and children>1)	//Case-1: U is root
@@ -86,7 +146,7 @@ public:
 			if(disc[u]==-1)
 			{
 				// cout<<u<<" ";
-				DFS0(u,disc,low,parent,articulation_Point);
+				DFSa(u,disc,low,parent,articulation_Point);
 			}
 		}
 
@@ -333,13 +393,64 @@ public:
 	void add_edge(ll a, ll b)
 	{
 		adj[a].push_back(b);
+
+		if(this->arg0 == false)
 		adj[b].push_back(a);
 	}
-	void add_edge_D(ll a, ll b)
-	{
-		adj[a].push_back(b);
-		adj[b].push_back(a);
-	}
+
+
+
+    bool Bi_help(ll N,ll node,unordered_map<ll, ll>& color)
+    {
+        queue<ll> q;
+        q.push(node);
+        color[node] = 1;
+        //Process current graph component using BFS
+        while(!q.empty())
+        {
+            ll curr = q.front();
+            q.pop();
+            for(ll ele: adj[curr])
+            {
+                if(color[ele]==color[curr]) //Odd-cycle
+                    return false;
+                if(color[ele]==-1)  //Unvisited node
+                {
+                    color[ele] = 1-color[curr];
+                    q.push(ele);
+                }
+            }
+        }
+        return true;
+    }
+
+
+
+
+    bool isBipartite()
+    {
+    	vector<ll>node_list;
+    	unordered_map<ll, ll>color;
+
+ 		for(auto u:adj)
+ 			node_list.push_back(u.first);
+
+ 		for(auto i:node_list)
+ 			color[i] = -1;
+
+ 		ll N = node_list.size();
+
+        for(auto i:node_list)
+            if(color[i]==-1)
+                if(!Bi_help(N,i,color))
+                    return false;
+        return true;
+    }
+
+
+
+
+
 
 };
 
